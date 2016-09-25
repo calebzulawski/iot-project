@@ -38,6 +38,7 @@ OBJECTS+=$(CXXSOURCES:%.cpp=%.o)
 # Define output files ELF & IHEX
 BINELF=outp.elf
 BINHEX=outp.hex
+BINBIN=outp.bin
 
 ###
 # MCU FLAGS
@@ -78,17 +79,21 @@ debug: CXXFLAGS+=-g
 debug: LDFLAGS+=-g
 debug: release
 
-release: $(BINDIR)/$(BINHEX)
+release: $(BINDIR)/$(BINHEX) $(BINDIR)/$(BINBIN)
 
 $(BINDIR)/$(BINHEX): $(BINDIR)/$(BINELF)
 	$(CP) -O ihex $< $@
 	@echo "Objcopy from ELF to IHEX complete!\n"
 
+$(BINDIR)/$(BINBIN): $(BINDIR)/$(BINELF)
+	$(CP) -O binary $< $@
+	@echo "Objcopy from ELF to binary complete!\n"
+
 ##
 # C++ linking is used.
 #
 # Change
-#   $(CXX) $(OBJECTS) $(LDFLAGS) -o $@ to 
+#   $(CXX) $(OBJECTS) $(LDFLAGS) -o $@ to
 #   $(CC) $(OBJECTS) $(LDFLAGS) -o $@ if
 #   C linker is required.
 $(BINDIR)/$(BINELF): $(OBJECTS)
@@ -117,4 +122,3 @@ ifeq ($(wildcard /opt/openocd/bin/openocd),)
 else
 	/opt/openocd/bin/openocd -f /opt/openocd/share/openocd/scripts/board/stm32f4discovery.cfg -c "program bin/"$(BINELF)" verify reset"
 endif
-
