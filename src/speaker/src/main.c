@@ -1,25 +1,48 @@
 #include "stm32f4xx.h"
-#include "defines.h"
-// #include "tm_stm32f4_usart.h"
+#include "stm32f4xx_gpio.h"
+#include "stm32f4xx_rcc.h"
 
-int main(void) {
-    uint8_t c;
+const uint16_t LEDS = GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
+const uint16_t LED[4] = {GPIO_Pin_12, GPIO_Pin_13, GPIO_Pin_14, GPIO_Pin_15};
 
-    /* Initialize system */
-    SystemInit();
+void init();
+void loop();
 
-    /* Initialize USART1 at 9600 baud, TX: PB6, RX: PB7 */
-    TM_USART_Init(USART1, TM_USART_PinsPack_2, 9600);
+void delay();
 
-    /* Put string to USART */
-    TM_USART_Puts(USART1, "Hello world\n\r");
+int main() {
+    init();
 
-    while (1) {
-        /* Get character from internal buffer */
-        c = TM_USART_Getc(USART1);
-        if (c) {
-            /* If anything received, put it back to terminal */
-            TM_USART_Putc(USART1, c);
-        }
+    do {
+        loop();
+    } while (1);
+}
+
+void init() {
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+    GPIO_InitTypeDef gpio;
+    GPIO_StructInit(&gpio);
+    gpio.GPIO_Mode = GPIO_Mode_OUT;
+    gpio.GPIO_Pin = LEDS;
+    GPIO_Init(GPIOD, &gpio);
+
+    GPIO_SetBits(GPIOD, LEDS);
+}
+
+void loop() {
+    static uint32_t counter = 0;
+
+    ++counter;
+
+    GPIO_ResetBits(GPIOD, LEDS);
+    GPIO_SetBits(GPIOD, LED[counter % 4]);
+
+    delay(1000);
+}
+
+void delay(uint32_t ms) {
+    ms *= 3360;
+    while(ms--) {
+        __NOP();
     }
 }
