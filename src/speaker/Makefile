@@ -46,7 +46,7 @@ MCFLAGS=-mcpu=cortex-m4 -mthumb -mlittle-endian \
 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb-interwork
 # COMPILE FLAGS
 DEFS=-DUSE_STDPERIPH_DRIVER -DSTM32F4XX
-CFLAGS=-c $(MCFLAGS) $(DEFS) $(INCLUDES)
+CFLAGS=-c $(MCFLAGS) $(DEFS) $(INCLUDES) -std=c99 -o0
 CXXFLAGS=-c $(MCFLAGS) $(DEFS) $(INCLUDES) -std=c++11
 # LINKER FLAGS
 LDSCRIPT=stm32_flash.ld
@@ -117,8 +117,4 @@ clean:
 	rm -f $(OBJECTS) $(BINDIR)/$(BINELF) $(BINDIR)/$(BINHEX) $(BINDIR)/output.map
 
 deploy:
-ifeq ($(wildcard /opt/openocd/bin/openocd),)
-	/usr/bin/openocd -f /usr/share/openocd/scripts/board/stm32f4discovery.cfg -c "program bin/"$(BINELF)" verify reset"
-else
-	/opt/openocd/bin/openocd -f /opt/openocd/share/openocd/scripts/board/stm32f4discovery.cfg -c "program bin/"$(BINELF)" verify reset"
-endif
+	openocd -f /usr/share/openocd/scripts/board/stm32f4discovery.cfg -c "program bin/"$(BINELF)" verify reset"
