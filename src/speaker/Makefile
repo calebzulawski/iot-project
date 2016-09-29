@@ -40,6 +40,14 @@ BINELF=outp.elf
 BINHEX=outp.hex
 BINBIN=outp.bin
 
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	OPENOCD_DIR=/usr/share/openocd/
+endif
+ifeq ($(UNAME_S),Darwin)
+	OPENOCD_DIR=/usr/local/share/openocd/
+endif
+
 ###
 # MCU FLAGS
 MCFLAGS=-mcpu=cortex-m4 -mthumb -mlittle-endian \
@@ -117,4 +125,4 @@ clean:
 	rm -f $(OBJECTS) $(BINDIR)/$(BINELF) $(BINDIR)/$(BINHEX) $(BINDIR)/output.map
 
 deploy:
-	openocd -f /usr/share/openocd/scripts/board/stm32f4discovery.cfg -c "program bin/"$(BINELF)" verify reset"
+	openocd -f $(OPENOCD_DIR)/scripts/board/stm32f4discovery.cfg -c "program bin/"$(BINELF)" verify reset"
