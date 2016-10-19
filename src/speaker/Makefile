@@ -126,3 +126,6 @@ clean:
 
 deploy:
 	openocd -f $(OPENOCD_DIR)/scripts/board/stm32f4discovery.cfg -c "program bin/"$(BINELF)" verify reset"
+
+test:
+	openocd -f $(OPENOCD_DIR)/scripts/board/stm32f4discovery.cfg

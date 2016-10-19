@@ -1,3 +1,4 @@
+#include "stm32f4_discovery.h"
 #include "stm32f4xx.h"
 #include "stm32f4xx_gpio.h"
 #include "stm32f4xx_rcc.h"
@@ -5,16 +6,20 @@
 const uint16_t LEDS = GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
 const uint16_t LED[4] = {GPIO_Pin_12, GPIO_Pin_13, GPIO_Pin_14, GPIO_Pin_15};
 
+uint32_t counter = 0;
+
 void EXTI0_IRQHandler(void)
 {
   if(EXTI_GetITStatus(EXTI_Line0) != RESET)
   {
     /* Clear the EXTI line 0 pending bit */
     EXTI_ClearITPendingBit(EXTI_Line0);
- 
+
     GPIO_ResetBits(GPIOD, LEDS);
-    
+
     STM_EVAL_LEDOff(LEDS);
+
+    counter = 0;
   }
 }
 
@@ -45,7 +50,7 @@ void init() {
     GPIO_InitTypeDef GPIO_InitStructure;
     EXTI_InitTypeDef EXTI_InitStructure;
     NVIC_InitTypeDef NVIC_InitStructure;
-     
+
     /* Enable GPIOA clock */
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
 
@@ -77,8 +82,6 @@ void init() {
 }
 
 void loop() {
-    static uint32_t counter = 0;
-
     ++counter;
 
     GPIO_ResetBits(GPIOD, LEDS);
