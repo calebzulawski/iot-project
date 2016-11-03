@@ -4,6 +4,10 @@
 #include "stm32f4xx_rcc.h"
 #include "uart.h"
 
+#include <stdio.h>
+
+#define BAUD (uint32_t)1000000ull
+
 const uint16_t LEDS = GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
 const uint16_t LED[4] = {GPIO_Pin_12, GPIO_Pin_13, GPIO_Pin_14, GPIO_Pin_15};
 
@@ -23,6 +27,10 @@ void EXTI0_IRQHandler(void)
     counter = 0;
 
     USART_puts(USART1, "Button Pressed! Hello World!\r\n"); // just send a message to indicate that it works
+
+    char numstr[16];
+    sprintf(numstr, "%d\r\n", SystemCoreClock);
+    USART_puts(USART1, numstr);
   }
 }
 
@@ -83,7 +91,7 @@ void init() {
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 
-    init_USART1(115200); // initialize USART1 @ 9600 baud
+    init_USART1(BAUD); // initialize USART1 @ 9600 baud
 }
 
 void loop() {
