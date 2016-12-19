@@ -1,7 +1,8 @@
 #include <stm32f4xx_usart.h> // under Libraries/STM32F4xx_StdPeriph_Driver/inc and src
+#include "uart.h"
 
-#define MAX_STRLEN 12 // this is the maximum string length of our string in characters
-volatile char received_string[MAX_STRLEN+1]; // this will hold the recieved string
+volatile int uart_data_filled = 0;
+volatile unsigned char* uart_data = 0;
 
 void Delay(__IO uint32_t nCount) {
   while(nCount--) {
@@ -107,25 +108,19 @@ void USART_puts(USART_TypeDef* USARTx, volatile char *s){
 	}
 }
 
+void USART_sendn(USART_TypeDef* USARTx, volatile unsigned char *d, int l){
+    for (int i = 0; i < l; i++){
+        while( !(USARTx->SR & 0x00000040) );
+		USART_SendData(USARTx, d[i]);
+    }
+}
+
 // this is the interrupt request handler (IRQ) for ALL USART1 interrupts
 void USART1_IRQHandler(void){
-
 	// check if the USART1 receive interrupt flag was set
 	if( USART_GetITStatus(USART1, USART_IT_RXNE) ){
-
-		static uint8_t cnt = 0; // this counter is used to determine the string length
-		char t = USART1->DR; // the character from the USART1 data register is saved in t
-
-		/* check if the received character is not the LF character (used to determine end of string)
-		 * or the if the maximum string length has been been reached
-		 */
-		if( (t != '\n') && (cnt < MAX_STRLEN) ){
-			received_string[cnt] = t;
-			cnt++;
-		}
-		else{ // otherwise reset the character counter and print the received string
-			cnt = 0;
-			USART_puts(USART1, received_string);
-		}
+		if(uart_data != 0 && uart_data_filled < UART_DATA_SIZE){
+            uart_data[uart_data_filled++] = USART1->DR;
+        }
 	}
 }

@@ -27,10 +27,10 @@ CSOURCES=$(shell find -L $(SRCDIR) -name '*.c')
 CXXSOURCES=$(shell find -L $(SRCDIR) -name '*.cpp')
 # Find header directories
 INC=$(shell find -L $(INCDIR) -name '*.h' -exec dirname {} \; | uniq)
-INCLUDES=$(INC:%=-I%)
+INCLUDES=$(INC:%=-I%) -I../../helix/pub
 # Find libraries
-INCLUDES_LIBS=
-LINK_LIBS=
+INCLUDES_LIBS=-L../../helix
+LINK_LIBS=-lhelix
 # Create object list
 OBJECTS=$(ASOURCES:%.s=%.o)
 OBJECTS+=$(CSOURCES:%.c=%.o)
@@ -51,7 +51,7 @@ endif
 ###
 # MCU FLAGS
 MCFLAGS=-mcpu=cortex-m4 -mthumb -mlittle-endian \
--mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb-interwork
+-mfpu=fpv4-sp-d16 -mfloat-abi=soft -mthumb-interwork
 # COMPILE FLAGS
 DEFS=-DUSE_STDPERIPH_DRIVER -DSTM32F4XX
 CFLAGS=-c $(MCFLAGS) $(DEFS) $(INCLUDES) -std=c99 -o0

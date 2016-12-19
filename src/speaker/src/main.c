@@ -3,6 +3,7 @@
 #include "stm32f4xx_gpio.h"
 #include "stm32f4xx_rcc.h"
 #include "uart.h"
+#include "mp3dec.h"
 
 #include <stdio.h>
 
@@ -12,6 +13,15 @@ const uint16_t LEDS = GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
 const uint16_t LED[4] = {GPIO_Pin_12, GPIO_Pin_13, GPIO_Pin_14, GPIO_Pin_15};
 
 uint32_t counter = 0;
+
+extern int uart_data_filled;
+extern unsigned char* uart_data;
+
+unsigned char buffer1[UART_DATA_SIZE];
+unsigned char buffer2[UART_DATA_SIZE];
+
+MP3FrameInfo mp3FrameInfo;
+HMP3Decoder hMP3Decoder;
 
 void EXTI0_IRQHandler(void)
 {
@@ -92,15 +102,58 @@ void init() {
     NVIC_Init(&NVIC_InitStructure);
 
     init_USART1(BAUD); // initialize USART1 @ 9600 baud
+
+    hMP3Decoder = MP3InitDecoder();
+
+    uart_data = buffer1;
 }
 
 void loop() {
-    ++counter;
+    // ++counter;
+    //
+    // GPIO_ResetBits(GPIOD, LEDS);
+    // GPIO_SetBits(GPIOD, LED[counter % 4]);
+    //
+    // delay(1000);
 
-    GPIO_ResetBits(GPIOD, LEDS);
-    GPIO_SetBits(GPIOD, LED[counter % 4]);
+    static short samples[10000];
 
-    delay(1000);
+    // __disable_irq();
+    if (uart_data_filled == UART_DATA_SIZE)
+    {
+        unsigned char *data = uart_data;
+        int offset = MP3FindSyncWord(data, UART_DATA_SIZE);
+        data += offset;
+        int bytes = UART_DATA_SIZE - offset;
+        // USART_puts(USART1, "START");
+        // __disable_irq();
+        int err = MP3Decode(hMP3Decoder, &data, &bytes, samples, 0);
+        // __enable_irq();
+        // USART_puts(USART1, "FINISH");
+
+        if (err) {
+            USART_puts(USART1, "ERROR");
+            /* error occurred */
+            switch (err) {
+            case ERR_MP3_INDATA_UNDERFLOW:
+                // outOfData = 1;
+                break;
+            case ERR_MP3_MAINDATA_UNDERFLOW:
+                /* do nothing - next call to decode will provide more mainData */
+                break;
+            case ERR_MP3_FREE_BITRATE_SYNC:
+            default:
+                // outOfData = 1;
+                break;
+            }
+        } else {
+            USART_puts(USART1, "NO ERROR");
+            /* no error */
+            MP3GetLastFrameInfo(hMP3Decoder, &mp3FrameInfo);
+            USART_sendn(USART1, (uint8_t*)samples, mp3FrameInfo.outputSamps * sizeof(short));
+        }
+    }
+    // __enable_irq();
 }
 
 void delay(uint32_t ms) {
